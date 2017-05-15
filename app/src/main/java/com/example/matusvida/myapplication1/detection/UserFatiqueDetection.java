@@ -1,6 +1,9 @@
 package com.example.matusvida.myapplication1.detection;
 
+import com.example.matusvida.myapplication1.constants.Props;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,72 +14,134 @@ import java.util.Map;
 
 public class UserFatiqueDetection {
 
-    private int fatigueRate;
+    private final int pulseRating = 6;
+    private final int blinkRating = 4;
+    private final int temperatureRating = 2;
+
+    private float fatigueRate;
     private List<Integer> listPulse;
+    private List<Integer> listBlink;
     private List<Float> listTemperature;
-    private int modusPulse;
-    private int modusTemperature;
     private int minPulse;
-    private int minTemperature;
+    private double minTemperature;
+    private int minBlink;
     private int maxPulse;
-    private int maxTemperature;
+    private int maxBlink;
+    private double maxTemperature;
     private double avgPulse;
+    private double avgBlink;
     private double avgTemperature;
 
     public UserFatiqueDetection(){
         fatigueRate = 0;
         listPulse = new ArrayList<Integer>();
+        listBlink = new ArrayList<Integer>();
         listTemperature = new ArrayList<Float>();
-        modusPulse = 0;
-        modusTemperature = 0;
-        minPulse = 100;
-        minTemperature = 39;
-        maxPulse = 0;
-        maxTemperature = 0;
-        avgPulse = 0;
-        avgTemperature = 0;
     }
 
-    public void createProfile(List list){
-        if(list.get(0) instanceof Integer){
-            listPulse = list;
-            avgPulse = getAveragePulse();
-            System.out.println(modusPulse);
-        } else if(list.get(0) instanceof Float){
-            listTemperature = list;
+    public void createProfile(List<Integer> pulse, List<Integer> blink, List<Float> temp){
+        listPulse = pulse;
+        listBlink = blink;
+        listTemperature = temp;
+        setAverageValues();
+        setMaxPulse(Collections.max(listPulse));
+        setMinPulse(Collections.min(listPulse));
+        setMaxBlink(Collections.max(listBlink));
+        setMinBlink(Collections.min(listBlink));
+        setMaxTemperature(Collections.max(listTemperature));
+        setMinTemperature(Collections.min(listTemperature));
+    }
+
+    private void setAverageValues(){
+        double pulseSum=0;
+        double tempSum=0;
+        double blinkSum=0;
+        for(Float number: listTemperature){
+            tempSum += number;
         }
-    }
-
-    private double getAveragePulse(){
-        int sum = 0;
-        for(Integer number: listPulse){
-            sum+=number;
+        for(int i=0; i<listPulse.size(); i++){
+            pulseSum += listPulse.get(i);
+            blinkSum += listBlink.get(i);
         }
-        return sum/listPulse.size();
+        setAvgPulse(pulseSum/listPulse.size());
+        setAvgBlink(blinkSum/listBlink.size());
+        setAvgTemperature(tempSum/listTemperature.size());
     }
 
-//    private void getPulseModeValue(){
-//        HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
-//        for(Integer number: listPulse){
-//            if(map.containsKey(number)){
-//                map.put(number, map.get(number) +1);
-//            } else{
-//                map.put(number, 1);
-//            }
-//        }
-//        Map.Entry<Integer,Integer> maxEntry = null;
-//
-//        for(Map.Entry<Integer,Integer> entry : map.entrySet()) {
-//            if (maxEntry == null || entry.getValue() > maxEntry.getValue()) {
-//                maxEntry = entry;
-//                modusPulse = maxEntry.getKey();
-//            }
-//            if(entry.getKey() > maxPulse){
-//                maxPulse = entry.getKey();
-//            }
-//            if(entry.getKey() < minPulse){
-//                minPulse = entry.getKey();
-//            }
-//        }
-//    }
+    public float calculateDrowsines(float currentPulse, float currentBlink, float currentTemperature){
+        fatigueRate = ((currentPulse/2) * pulseRating) + (currentBlink*blinkRating) + (currentTemperature * temperatureRating);
+        return fatigueRate;
+    }
+
+    public int getMinPulse() {
+        return minPulse;
+    }
+
+    public void setMinPulse(int minPulse) {
+        this.minPulse = minPulse;
+    }
+
+    public double getMinTemperature() {
+        return minTemperature;
+    }
+
+    public void setMinTemperature(double minTemperature) {
+        this.minTemperature = minTemperature;
+    }
+
+    public int getMinBlink() {
+        return minBlink;
+    }
+
+    public void setMinBlink(int minBlink) {
+        this.minBlink = minBlink;
+    }
+
+    public int getMaxPulse() {
+        return maxPulse;
+    }
+
+    public void setMaxPulse(int maxPulse) {
+        this.maxPulse = maxPulse;
+    }
+
+    public int getMaxBlink() {
+        return maxBlink;
+    }
+
+    public void setMaxBlink(int maxBlink) {
+        this.maxBlink = maxBlink;
+    }
+
+    public double getMaxTemperature() {
+        return maxTemperature;
+    }
+
+    public void setMaxTemperature(double maxTemperature) {
+        this.maxTemperature = maxTemperature;
+    }
+
+    public double getAvgPulse() {
+        return avgPulse;
+    }
+
+    public void setAvgPulse(double avgPulse) {
+        this.avgPulse = avgPulse;
+    }
+
+    public double getAvgBlink() {
+        return avgBlink;
+    }
+
+    public void setAvgBlink(double avgBlink) {
+        this.avgBlink = avgBlink;
+    }
+
+    public double getAvgTemperature() {
+        return avgTemperature;
+    }
+
+    public void setAvgTemperature(double avgTemperature) {
+        this.avgTemperature = avgTemperature;
+    }
 }

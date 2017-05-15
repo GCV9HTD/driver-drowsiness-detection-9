@@ -22,7 +22,7 @@ public class Loader {
 
     private ClassLoader classLoader;
     private List<Integer> listInt;
-    private List<Float> listDouble;
+    private List<Float> listFloat;
     private String output;
     private BufferedReader reader;
 
@@ -30,7 +30,7 @@ public class Loader {
     public Loader(){
         reader = null;
         listInt = new ArrayList<Integer>();
-        listDouble = new ArrayList<Float>();
+        listFloat = new ArrayList<Float>();
     }
 
     public List load(String fileName, Context c, String type){
@@ -45,11 +45,12 @@ public class Loader {
             return listInt;
         } else {
             getDoubleItems(c);
-            return listDouble;
+            return listFloat;
         }
     }
 
     public void getIntItems (Context c){
+        listInt = new ArrayList<Integer>();
         try {
             while((output = reader.readLine()) != null){
                 listInt.add(Integer.valueOf(output));
@@ -61,7 +62,7 @@ public class Loader {
     public void getDoubleItems (Context c){
         try {
             while((output = reader.readLine()) != null){
-                listDouble.add(Float.valueOf(output));
+                listFloat.add(Float.valueOf(output));
             }
         } catch (IOException e) {
             e.printStackTrace();

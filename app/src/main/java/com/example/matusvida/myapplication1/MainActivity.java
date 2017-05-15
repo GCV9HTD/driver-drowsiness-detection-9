@@ -18,6 +18,8 @@ import at.grabner.circleprogress.AnimationStateChangedListener;
 import at.grabner.circleprogress.CircleProgressView;
 import at.grabner.circleprogress.TextMode;
 
+import static java.lang.Thread.sleep;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -36,7 +38,12 @@ public class MainActivity extends AppCompatActivity {
     List<Integer> userProfileBlinkList;
     List<Float> userProfileTempList;
     boolean isStopped = true;
+    int createProfileIterationValue;
     UserFatiqueDetection detection;
+    private float currentPulse;
+    private float currentBlink;
+    private float currentTemperature;
+    private float fatiqueRate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,22 +62,22 @@ public class MainActivity extends AppCompatActivity {
                 if(isStopped){
                     start.setText("STOP");
                     isStopped = false;
-                    setMeasure(0.7f);
+                    setStartMeasure(0.7f);
                     refreshHeartRate.run();
                     refreshBlinkRate.run();
                     refreshTemperature.run();
-                    //new ProgressTask().doInBackground();
-                    if(userProfilePulseList.size() == 2) {
-                        Toast.makeText(MainActivity.this, "User profile created !", Toast.LENGTH_LONG).show();
+                    if(getCreateProfileIterationValue() < Props.USER_PROFILE_PULSE_DATA){
+                        refreshResult.run();
                     }
-
                 } else if(!isStopped){
                     start.setText("START");
                     setSpinText();
                     setSpin(1); //1 is size of text while spinning
                     isStopped = true;
                     mCirclePulse.removeCallbacks(refreshHeartRate);
+                    mCircleBlink.removeCallbacks(refreshBlinkRate);
                     mCircleTemp.removeCallbacks(refreshTemperature);
+                    mCircleResult.removeCallbacks(refreshResult);
                 }
             }
         });
@@ -85,11 +92,15 @@ public class MainActivity extends AppCompatActivity {
                             case START_ANIMATING_AFTER_SPINNING:
                                 mCirclePulse.setTextMode(TextMode.PERCENT); // show percent if not spinning
                                 mCirclePulse.setUnitVisible(mShowUnit);
+                                mCircleBlink.setTextMode(TextMode.VALUE);
+                                mCircleBlink.setUnitVisible(mShowUnit);
                                 mCircleTemp.setUnitVisible(mShowUnit);
                                 break;
                             case SPINNING:
                                 mCirclePulse.setTextMode(TextMode.TEXT); // show text while spinning
                                 mCirclePulse.setUnitVisible(false);
+                                mCircleBlink.setTextMode(TextMode.TEXT);
+                                mCircleBlink.setUnitVisible(false);
                                 mCircleTemp.setUnitVisible(false);
                             case END_SPINNING:
                                 break;
@@ -108,19 +119,19 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             mCirclePulse.setValueAnimated(listHeartRate.get(i)*2);
             if(i < Props.USER_PROFILE_PULSE_DATA){
+                setCreateProfileIterationValue(i);
                 userProfilePulseList.add(listHeartRate.get(i));
-                setCircleViewResultValue(i);
             } else if(i == Props.USER_PROFILE_PULSE_DATA){
-                setCircleViewResultValue(i);
-                detection.createProfile(userProfilePulseList);
+                changeResultProgressViewState();
+                detection.createProfile(userProfilePulseList, userProfileBlinkList, userProfileTempList);
                 Toast.makeText(MainActivity.this, "User profile created !", Toast.LENGTH_LONG).show();
-            } else{
-                mCircleResult.setTextMode(TextMode.TEXT);
-                mCircleResult.setUnitVisible(false);
-                mCircleResult.setText("Profile created");
+            } else if(i == Props.USER_PROFILE_PULSE_DATA +1){
+                mCircleResult.setTextMode(TextMode.PERCENT);
+
+                detectDrowsiness.run();
             }
             i++;
-            mCirclePulse.postDelayed(this, 3000);
+            mCirclePulse.postDelayed(this, Props.PULSE_CHANGING_INTERVAL);
         }
     };
 
@@ -133,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
                 userProfileBlinkList.add(listBlinkRate.get(i));
             }
             i++;
-            mCircleBlink.postDelayed(this, 3000);
+            mCircleBlink.postDelayed(this, Props.BLINK_CHANGING_INTERVAL);
         }
     };
 
@@ -143,38 +154,63 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             mCircleTemp.setTextMode(TextMode.TEXT);
             mCircleTemp.setText(String.valueOf(listTemperature.get(i)));
-
             if(i< Props.USER_PROFILE_TEMP_DATA){
                 userProfileTempList.add(listTemperature.get(i));
-            } else{
-                detection.createProfile(userProfileTempList);
             }
             i++;
-            mCircleTemp.postDelayed(this, 5000);
+            mCircleTemp.postDelayed(this, Props.TEMP_CHANGING_INTERVAL);
         }
     };
 
-//    private Runnable refreshResult = new Runnable() {
-//        @Override
-//        public void run() {
-//            setCircleViewResultValue(i);
-//        }
-//    }
+    private Runnable refreshResult = new Runnable() {
+        float i = 1;
+        @Override
+        public void run() {
+            i+=(Props.RESULT_CHANGING_INTERVAL_CALCULATION);
+            if(getCreateProfileIterationValue() < Props.USER_PROFILE_PULSE_DATA) {
+                mCircleResult.setValueAnimated(i);
+            } else{
+
+            }
+            mCircleResult.postDelayed(this, 1000);
+        }
+    };
+
+    private Runnable detectDrowsiness = new Runnable() {
+        int i = 0;
+        @Override
+        public void run() {
+            while(i < 3) {
+                currentPulse += mCirclePulse.getCurrentValue();
+                currentBlink += mCircleBlink.getCurrentValue();
+                currentTemperature += mCircleTemp.getCurrentValue();
+                i++;
+            }
+
+            fatiqueRate = detection.calculateDrowsines(currentPulse,currentBlink,currentTemperature);
+            mCircleResult.setValueAnimated(fatiqueRate);
+
+            mCircleResult.postDelayed(this, 12000);
+        }
+    };
 
     private void setSpin(float size){
         mCirclePulse.setTextScale(size);
+        mCircleBlink.setTextScale(size);
         mCirclePulse.spin();
+        mCircleBlink.spin();
         mCircleTemp.spin();
         mCircleResult.stopSpinning();
     }
 
-    private void setMeasure(float size){
+    private void setStartMeasure(float size){
         mCirclePulse.setTextScale(size);
+        mCircleBlink.setTextScale(size);
         mCirclePulse.stopSpinning();
+        mCircleBlink.stopSpinning();
         mCircleTemp.stopSpinning();
         //mCircleResult.spin();
         //mCircleResult.setValueAnimated(listHeartRate.size());
-
     }
 
     private void loadData(){
@@ -192,11 +228,29 @@ public class MainActivity extends AppCompatActivity {
         mCirclePulse.setText("Paused ...");
         mCircleTemp.setShowTextWhileSpinning(true); // Show/hide text in spinning mode
         mCircleTemp.setText("Paused ...");
+        mCircleBlink.setShowTextWhileSpinning(true);
+        mCircleBlink.setText("Paused ...");
         mCircleResult.setTextMode(TextMode.PERCENT);
     }
 
     private void setCircleViewResultValue(int i){
         mCircleResult.setValueAnimated((listHeartRate.size() / (Props.USER_PROFILE_PULSE_DATA)) * (i+1));
+    }
+
+    public int getCreateProfileIterationValue() {
+        return createProfileIterationValue;
+    }
+
+    public void setCreateProfileIterationValue(int createProfileIterationValue) {
+        this.createProfileIterationValue = createProfileIterationValue;
+    }
+
+    public void changeResultProgressViewState(){
+        setCircleViewResultValue(Props.USER_PROFILE_CREATED_RESULT_VALUE);
+        mCircleResult.removeCallbacks(refreshResult);
+        mCircleResult.setTextMode(TextMode.TEXT);
+        mCircleResult.setUnitVisible(false);
+        mCircleResult.setText("Profile created");
     }
 
     @Override
@@ -236,7 +290,7 @@ public class MainActivity extends AppCompatActivity {
             });
 
             try {
-                Thread.sleep(2000);
+                sleep(2000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
