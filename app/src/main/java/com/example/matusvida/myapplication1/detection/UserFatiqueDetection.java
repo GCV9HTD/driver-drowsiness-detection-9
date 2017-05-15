@@ -68,8 +68,11 @@ public class UserFatiqueDetection {
         setAvgTemperature(tempSum/listTemperature.size());
     }
 
-    public float calculateDrowsines(float currentPulse, float currentBlink, float currentTemperature){
-        fatigueRate = ((currentPulse/2) * pulseRating) + (currentBlink*blinkRating) + (currentTemperature * temperatureRating);
+    public float calculateDrowsiness(float currentPulse, float currentBlink, float currentTemperature){
+        float currentPulseAvg = (currentPulse/8) * pulseRating;
+        float currentBlinkAvg = (currentBlink/4) * blinkRating;
+        float currentTempAvg = (currentTemperature/4) * temperatureRating;
+        fatigueRate = currentBlinkAvg + currentBlinkAvg + currentTempAvg;
         return fatigueRate;
     }
 

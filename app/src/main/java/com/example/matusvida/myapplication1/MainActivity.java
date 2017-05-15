@@ -180,16 +180,28 @@ public class MainActivity extends AppCompatActivity {
         int i = 0;
         @Override
         public void run() {
-            while(i < 3) {
-                currentPulse += mCirclePulse.getCurrentValue();
-                currentBlink += mCircleBlink.getCurrentValue();
-                currentTemperature += mCircleTemp.getCurrentValue();
+            mCircleResult.removeCallbacks(showDrowsinessResult);
+            currentPulse += mCirclePulse.getCurrentValue();
+            currentBlink += mCircleBlink.getCurrentValue();
+            currentTemperature += mCircleTemp.getCurrentValue();
+            //mCircleResult.setValueAnimated(fatiqueRate);
+            if(i==3){
+                fatiqueRate = detection.calculateDrowsiness(currentPulse,currentBlink,currentTemperature);
+                showDrowsinessResult.run();
+                setToNull();
+                i=0;
+            } else {
                 i++;
             }
 
-            fatiqueRate = detection.calculateDrowsines(currentPulse,currentBlink,currentTemperature);
-            mCircleResult.setValueAnimated(fatiqueRate);
+            mCircleResult.postDelayed(this, 3000);
+        }
+    };
 
+    private Runnable showDrowsinessResult = new Runnable() {
+        @Override
+        public void run() {
+            mCircleResult.setValueAnimated(fatiqueRate);
             mCircleResult.postDelayed(this, 12000);
         }
     };
@@ -251,6 +263,12 @@ public class MainActivity extends AppCompatActivity {
         mCircleResult.setTextMode(TextMode.TEXT);
         mCircleResult.setUnitVisible(false);
         mCircleResult.setText("Profile created");
+    }
+
+    private void setToNull(){
+        currentPulse = 0;
+        currentBlink = 0;
+        currentTemperature = 0;
     }
 
     @Override
