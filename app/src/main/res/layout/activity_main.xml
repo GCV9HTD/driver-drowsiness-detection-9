@@ -92,7 +92,7 @@
         CircleProgressView:cpv_spinColor="@color/spinColor"
         CircleProgressView:cpv_textColor="@color/primary_dark"
         CircleProgressView:cpv_textScale="0.7"
-        CircleProgressView:cpv_unit="b/min"
+        CircleProgressView:cpv_unit="bpm"
         CircleProgressView:cpv_unitColor="@color/primary_light"
         CircleProgressView:cpv_unitPosition="bottom"
         CircleProgressView:cpv_unitScale="1.2"

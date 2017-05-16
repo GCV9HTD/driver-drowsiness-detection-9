@@ -1,5 +1,6 @@
 package com.example.matusvida.myapplication1;
 
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
                     refreshBlinkRate.run();
                     refreshTemperature.run();
                     if(getCreateProfileIterationValue() < Props.USER_PROFILE_PULSE_DATA){
+                        mCircleResult.setBarColor(getResources().getColor(R.color.accent));
                         refreshResult.run();
                     }
                 } else if(!isStopped){
@@ -153,9 +155,12 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             mCircleTemp.setTextMode(TextMode.TEXT);
+            mCircleTemp.setValue(listTemperature.get(i));
             mCircleTemp.setText(String.valueOf(listTemperature.get(i)));
             if(i< Props.USER_PROFILE_TEMP_DATA){
                 userProfileTempList.add(listTemperature.get(i));
+            } else if(i > Props.USER_PROFILE_TEMP_DATA){
+                currentTemperature += mCircleTemp.getCurrentValue();
             }
             i++;
             mCircleTemp.postDelayed(this, Props.TEMP_CHANGING_INTERVAL);
@@ -183,8 +188,6 @@ public class MainActivity extends AppCompatActivity {
             mCircleResult.removeCallbacks(showDrowsinessResult);
             currentPulse += mCirclePulse.getCurrentValue();
             currentBlink += mCircleBlink.getCurrentValue();
-            currentTemperature += mCircleTemp.getCurrentValue();
-            //mCircleResult.setValueAnimated(fatiqueRate);
             if(i==3){
                 fatiqueRate = detection.calculateDrowsiness(currentPulse,currentBlink,currentTemperature);
                 showDrowsinessResult.run();
@@ -201,6 +204,14 @@ public class MainActivity extends AppCompatActivity {
     private Runnable showDrowsinessResult = new Runnable() {
         @Override
         public void run() {
+            //if(fatiqueRate 50){
+                //mCircleResult.setBarColor(Color.GREEN);
+                mCircleResult.setBarColor(getResources().getColor(R.color.lowFatique), getResources().getColor(R.color.lowMiddleFatique),
+                        getResources().getColor(R.color.middleFatique), getResources().getColor(R.color.middleHighFatique),
+                        getResources().getColor(R.color.highFatique));
+            //} else{
+                //mCircleResult.setBarColor(Color.RED);
+            //}
             mCircleResult.setValueAnimated(fatiqueRate);
             mCircleResult.postDelayed(this, 12000);
         }

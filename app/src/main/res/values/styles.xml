@@ -9,6 +9,11 @@
     <color name="secondary_text">#727272</color>
     <color name="icons">#FFFFFF</color>
     <color name="divider">#b6b6b6</color>
+    <color name="lowFatique">#8fbc00</color>
+    <color name="lowMiddleFatique">#ffd000</color>
+    <color name= "middleFatique">#ff6518</color>
+    <color name="middleHighFatique">#ff3f29</color>
+    <color name="highFatique">#ff0000</color>
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->

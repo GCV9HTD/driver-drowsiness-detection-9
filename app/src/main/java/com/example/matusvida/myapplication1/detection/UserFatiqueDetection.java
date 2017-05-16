@@ -23,11 +23,11 @@ public class UserFatiqueDetection {
     private List<Integer> listBlink;
     private List<Float> listTemperature;
     private int minPulse;
-    private double minTemperature;
+    private float minTemperature;
     private int minBlink;
     private int maxPulse;
     private int maxBlink;
-    private double maxTemperature;
+    private float maxTemperature;
     private double avgPulse;
     private double avgBlink;
     private double avgTemperature;
@@ -68,12 +68,39 @@ public class UserFatiqueDetection {
         setAvgTemperature(tempSum/listTemperature.size());
     }
 
-    public float calculateDrowsiness(float currentPulse, float currentBlink, float currentTemperature){
-        float currentPulseAvg = (currentPulse/8) * pulseRating;
-        float currentBlinkAvg = (currentBlink/4) * blinkRating;
-        float currentTempAvg = (currentTemperature/4) * temperatureRating;
-        fatigueRate = currentBlinkAvg + currentBlinkAvg + currentTempAvg;
-        return fatigueRate;
+    public float calculateDrowsiness(float currentPulse, float currentBlink, float currentTemperature) {
+        float currentPulseAvg = (currentPulse / 8);// * pulseRating;
+        float currentBlinkAvg = (currentBlink / 4);
+        float currentTempAvg;
+        if (currentTemperature > 100){// * blinkRating;
+            currentTempAvg = (currentTemperature / 3);// * temperatureRating;
+        } else{
+            currentTempAvg = currentTemperature / 2;
+        }
+        float result = 0;
+
+        float pulse = currentPulseAvg - minPulse;
+        float blink = currentBlinkAvg - minBlink;
+        float temp = currentTempAvg - minTemperature;
+
+        float maxSum = (maxPulse-minPulse) + (maxBlink-minBlink) + (maxTemperature-minTemperature) * 100;
+        if(pulse < 0){
+            pulse *= 3;
+        }
+        if(blink < 0){
+            blink *= 2;
+        }
+        if(temp < 0){
+            temp *= 3;
+        }
+        fatigueRate = pulse + blink + temp;
+
+        if(fatigueRate < 0){
+            result = fatigueRate*(-1)*2.5f + 50;
+        } else{
+            result = 50 - fatigueRate *2.5f;
+        }
+        return result;
     }
 
     public int getMinPulse() {
@@ -88,7 +115,7 @@ public class UserFatiqueDetection {
         return minTemperature;
     }
 
-    public void setMinTemperature(double minTemperature) {
+    public void setMinTemperature(float minTemperature) {
         this.minTemperature = minTemperature;
     }
 
@@ -120,7 +147,7 @@ public class UserFatiqueDetection {
         return maxTemperature;
     }
 
-    public void setMaxTemperature(double maxTemperature) {
+    public void setMaxTemperature(float maxTemperature) {
         this.maxTemperature = maxTemperature;
     }
 
