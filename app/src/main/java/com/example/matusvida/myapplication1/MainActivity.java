@@ -1,6 +1,6 @@
 package com.example.matusvida.myapplication1;
 
-import android.graphics.Color;
+import android.app.ActivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -23,8 +23,6 @@ import static java.lang.Thread.sleep;
 
 
 public class MainActivity extends AppCompatActivity {
-
-    private final static String TAG = "MainActivity";
 
     CircleProgressView mCirclePulse;
     CircleProgressView mCircleTemp;
@@ -55,9 +53,7 @@ public class MainActivity extends AppCompatActivity {
         setSpinText();
         loadData();
 
-
         start.setOnClickListener(new View.OnClickListener() {
-            long startTime = System.currentTimeMillis();
             @Override
             public void onClick(View v) {
                 if(isStopped){
@@ -72,14 +68,8 @@ public class MainActivity extends AppCompatActivity {
                         refreshResult.run();
                     }
                 } else if(!isStopped){
-                    start.setText("START");
-                    setSpinText();
-                    setSpin(1); //1 is size of text while spinning
-                    isStopped = true;
-                    mCirclePulse.removeCallbacks(refreshHeartRate);
-                    mCircleBlink.removeCallbacks(refreshBlinkRate);
-                    mCircleTemp.removeCallbacks(refreshTemperature);
-                    mCircleResult.removeCallbacks(refreshResult);
+                    setStop();
+
                 }
             }
         });
@@ -119,6 +109,12 @@ public class MainActivity extends AppCompatActivity {
         int i = 0;
         @Override
         public void run() {
+            if(!isValueInList(listHeartRate, i)){
+                setDataErrorResult(Props.PULSE_DATA_ERROR);
+                setStop();
+                isStopped = false;
+                return;
+            }
             mCirclePulse.setValueAnimated(listHeartRate.get(i)*2);
             if(i < Props.USER_PROFILE_PULSE_DATA){
                 setCreateProfileIterationValue(i);
@@ -141,6 +137,12 @@ public class MainActivity extends AppCompatActivity {
         int i = 0;
         @Override
         public void run() {
+            if(!isValueInList(listHeartRate, i)){
+                setDataErrorResult(Props.BLINK_DATA_ERROR);
+                setStop();
+                isStopped = false;
+                return;
+            }
             mCircleBlink.setValueAnimated(listBlinkRate.get(i));
             if(i < Props.USER_PROFILE_BLINK_DATA){
                 userProfileBlinkList.add(listBlinkRate.get(i));
@@ -154,6 +156,12 @@ public class MainActivity extends AppCompatActivity {
         int i = 0;
         @Override
         public void run() {
+            if(!isValueInList(listHeartRate, i)){
+                setDataErrorResult(Props.TEMP_DATA_ERROR);
+                stopThreads();
+                isStopped = false;
+                return;
+            }
             mCircleTemp.setTextMode(TextMode.TEXT);
             mCircleTemp.setValue(listTemperature.get(i));
             mCircleTemp.setText(String.valueOf(listTemperature.get(i)));
@@ -204,18 +212,22 @@ public class MainActivity extends AppCompatActivity {
     private Runnable showDrowsinessResult = new Runnable() {
         @Override
         public void run() {
-            //if(fatiqueRate 50){
-                //mCircleResult.setBarColor(Color.GREEN);
-                mCircleResult.setBarColor(getResources().getColor(R.color.lowFatique), getResources().getColor(R.color.lowMiddleFatique),
-                        getResources().getColor(R.color.middleFatique), getResources().getColor(R.color.middleHighFatique),
-                        getResources().getColor(R.color.highFatique));
-            //} else{
-                //mCircleResult.setBarColor(Color.RED);
-            //}
+            mCircleResult.setBarColor(getResources().getColor(R.color.lowFatique), getResources().getColor(R.color.lowMiddleFatique),
+                    getResources().getColor(R.color.middleFatique), getResources().getColor(R.color.middleHighFatique),
+                    getResources().getColor(R.color.highFatique));
+
             mCircleResult.setValueAnimated(fatiqueRate);
             mCircleResult.postDelayed(this, 12000);
         }
     };
+
+    private void setStop(){
+        start.setText("START");
+        setSpinText();
+        setSpin(1);
+        isStopped = true;
+        stopThreads();
+    }
 
     private void setSpin(float size){
         mCirclePulse.setTextScale(size);
@@ -276,10 +288,32 @@ public class MainActivity extends AppCompatActivity {
         mCircleResult.setText("Profile created");
     }
 
+    private void stopThreads(){
+        mCirclePulse.removeCallbacks(refreshHeartRate);
+        mCircleBlink.removeCallbacks(refreshBlinkRate);
+        mCircleTemp.removeCallbacks(refreshTemperature);
+        mCircleResult.removeCallbacks(refreshResult);
+    }
+
     private void setToNull(){
         currentPulse = 0;
         currentBlink = 0;
         currentTemperature = 0;
+    }
+
+    private void setDataErrorResult(String message){
+        mCircleResult.setTextMode(TextMode.TEXT);
+        mCircleResult.setText(message);
+        Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+        //start.callOnClick();
+    }
+
+    private boolean isValueInList(List<Integer> list, int i){
+        if(list.size() == i){
+            return false;
+        }
+
+        return true;
     }
 
     @Override
