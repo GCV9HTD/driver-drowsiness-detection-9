@@ -14,9 +14,9 @@ import java.util.Map;
 
 public class UserFatiqueDetection {
 
-    private final int pulseRating = 6;
-    private final int blinkRating = 4;
-    private final int temperatureRating = 2;
+    private final int pulseRating = 3;
+    private final int blinkRating = 2;
+    private final int temperatureRating = 3;
 
     private float fatigueRate;
     private List<Integer> listPulse;
@@ -72,8 +72,8 @@ public class UserFatiqueDetection {
         float currentPulseAvg = (currentPulse / 8);// * pulseRating;
         float currentBlinkAvg = (currentBlink / 4);
         float currentTempAvg;
-        if (currentTemperature > 100){// * blinkRating;
-            currentTempAvg = (currentTemperature / 3);// * temperatureRating;
+        if (currentTemperature > 100){
+            currentTempAvg = (currentTemperature / 3);
         } else{
             currentTempAvg = currentTemperature / 2;
         }
@@ -85,90 +85,55 @@ public class UserFatiqueDetection {
 
         float maxSum = (maxPulse-minPulse) + (maxBlink-minBlink) + (maxTemperature-minTemperature) * 100;
         if(pulse < 0){
-            pulse *= 3;
+            pulse *= pulseRating;
         }
         if(blink < 0){
-            blink *= 2;
+            blink *= blinkRating;
         }
         if(temp < 0){
-            temp *= 3;
+            temp *= temperatureRating;
         }
         fatigueRate = pulse + blink + temp;
 
         if(fatigueRate < 0){
-            result = fatigueRate*(-1)*2.5f + 50;
+            result = fatigueRate*(-1)*2.5f + Props.MIN_VALUES_PERCENTAGE;
         } else{
-            result = 50 - fatigueRate *2.5f;
+            result = Props.MIN_VALUES_PERCENTAGE - fatigueRate *2.5f;
         }
         return result;
     }
 
-    public int getMinPulse() {
-        return minPulse;
-    }
 
     public void setMinPulse(int minPulse) {
         this.minPulse = minPulse;
-    }
-
-    public double getMinTemperature() {
-        return minTemperature;
     }
 
     public void setMinTemperature(float minTemperature) {
         this.minTemperature = minTemperature;
     }
 
-    public int getMinBlink() {
-        return minBlink;
-    }
-
     public void setMinBlink(int minBlink) {
         this.minBlink = minBlink;
-    }
-
-    public int getMaxPulse() {
-        return maxPulse;
     }
 
     public void setMaxPulse(int maxPulse) {
         this.maxPulse = maxPulse;
     }
 
-    public int getMaxBlink() {
-        return maxBlink;
-    }
-
     public void setMaxBlink(int maxBlink) {
         this.maxBlink = maxBlink;
-    }
-
-    public double getMaxTemperature() {
-        return maxTemperature;
     }
 
     public void setMaxTemperature(float maxTemperature) {
         this.maxTemperature = maxTemperature;
     }
 
-    public double getAvgPulse() {
-        return avgPulse;
-    }
-
     public void setAvgPulse(double avgPulse) {
         this.avgPulse = avgPulse;
     }
 
-    public double getAvgBlink() {
-        return avgBlink;
-    }
-
     public void setAvgBlink(double avgBlink) {
         this.avgBlink = avgBlink;
-    }
-
-    public double getAvgTemperature() {
-        return avgTemperature;
     }
 
     public void setAvgTemperature(double avgTemperature) {

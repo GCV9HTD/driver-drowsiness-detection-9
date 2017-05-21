@@ -1,6 +1,10 @@
 package com.example.matusvida.myapplication1;
 
 import android.app.ActivityManager;
+import android.content.pm.ActivityInfo;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -48,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         init();
         setSpinText();
         loadData();
@@ -63,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
                     refreshHeartRate.run();
                     refreshBlinkRate.run();
                     refreshTemperature.run();
-                    if(getCreateProfileIterationValue() < Props.USER_PROFILE_PULSE_DATA){
+                    if(getCreateProfileIterationValue() < Props.USER_PROFILE_PULSE_DATA -2){
                         mCircleResult.setBarColor(getResources().getColor(R.color.accent));
                         refreshResult.run();
                     }
@@ -216,6 +220,11 @@ public class MainActivity extends AppCompatActivity {
                     getResources().getColor(R.color.middleFatique), getResources().getColor(R.color.middleHighFatique),
                     getResources().getColor(R.color.highFatique));
 
+            if(fatiqueRate < 50){
+                Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+                r.play();
+            }
             mCircleResult.setValueAnimated(fatiqueRate);
             mCircleResult.postDelayed(this, 12000);
         }
