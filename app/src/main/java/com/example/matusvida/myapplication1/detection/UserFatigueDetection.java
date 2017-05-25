@@ -12,7 +12,7 @@ import java.util.Map;
  * Created by matus.vida on 4/30/2017.
  */
 
-public class UserFatiqueDetection {
+public class UserFatigueDetection {
 
     private final int pulseRating = 3;
     private final int blinkRating = 2;
@@ -32,7 +32,7 @@ public class UserFatiqueDetection {
     private double avgBlink;
     private double avgTemperature;
 
-    public UserFatiqueDetection(){
+    public UserFatigueDetection(){
         fatigueRate = 0;
         listPulse = new ArrayList<Integer>();
         listBlink = new ArrayList<Integer>();
@@ -69,21 +69,21 @@ public class UserFatiqueDetection {
     }
 
     public float calculateDrowsiness(float currentPulse, float currentBlink, float currentTemperature) {
-        float currentPulseAvg = (currentPulse / 8);// * pulseRating;
+        float currentPulseAvg = (currentPulse / 8);
         float currentBlinkAvg = (currentBlink / 4);
         float currentTempAvg;
+        float result = 0;
+
         if (currentTemperature > 100){
             currentTempAvg = (currentTemperature / 3);
         } else{
             currentTempAvg = currentTemperature / 2;
         }
-        float result = 0;
 
         float pulse = currentPulseAvg - minPulse;
         float blink = currentBlinkAvg - minBlink;
         float temp = currentTempAvg - minTemperature;
 
-        float maxSum = (maxPulse-minPulse) + (maxBlink-minBlink) + (maxTemperature-minTemperature) * 100;
         if(pulse < 0){
             pulse *= pulseRating;
         }
@@ -97,12 +97,23 @@ public class UserFatiqueDetection {
 
         if(fatigueRate < 0){
             result = fatigueRate*(-1)*2.5f + Props.MIN_VALUES_PERCENTAGE;
+            result = checkResultValue(result);
         } else{
             result = Props.MIN_VALUES_PERCENTAGE - fatigueRate *2.5f;
+            result = checkResultValue(result);
         }
         return result;
     }
 
+    private float checkResultValue(float result){
+        if(result > 100){
+            result = 100f;
+        }
+        if (result < 0){
+            result = 0f;
+        }
+        return result;
+    }
 
     public void setMinPulse(int minPulse) {
         this.minPulse = minPulse;

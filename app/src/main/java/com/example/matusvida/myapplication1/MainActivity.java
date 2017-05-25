@@ -1,6 +1,5 @@
 package com.example.matusvida.myapplication1;
 
-import android.app.ActivityManager;
 import android.content.pm.ActivityInfo;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -13,8 +12,9 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.matusvida.myapplication1.constants.Props;
-import com.example.matusvida.myapplication1.detection.UserFatiqueDetection;
+import com.example.matusvida.myapplication1.detection.UserFatigueDetection;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,11 +42,11 @@ public class MainActivity extends AppCompatActivity {
     List<Float> userProfileTempList;
     boolean isStopped = true;
     int createProfileIterationValue;
-    UserFatiqueDetection detection;
+    UserFatigueDetection detection;
     private float currentPulse;
     private float currentBlink;
     private float currentTemperature;
-    private float fatiqueRate;
+    private float fatigueRate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
                     if(getCreateProfileIterationValue() < Props.USER_PROFILE_PULSE_DATA -2){
                         mCircleResult.setBarColor(getResources().getColor(R.color.accent));
                         refreshResult.run();
+                    } else{
+                        detectDrowsiness.run();
                     }
                 } else if(!isStopped){
                     setStop();
@@ -117,6 +119,8 @@ public class MainActivity extends AppCompatActivity {
                 setDataErrorResult(Props.PULSE_DATA_ERROR);
                 setStop();
                 isStopped = false;
+                setCreateProfileIterationValue((int)Double.POSITIVE_INFINITY);
+                mCircleResult.setUnitVisible(false);
                 return;
             }
             mCirclePulse.setValueAnimated(listHeartRate.get(i)*2);
@@ -126,10 +130,11 @@ public class MainActivity extends AppCompatActivity {
             } else if(i == Props.USER_PROFILE_PULSE_DATA){
                 changeResultProgressViewState();
                 detection.createProfile(userProfilePulseList, userProfileBlinkList, userProfileTempList);
-                Toast.makeText(MainActivity.this, "User profile created !", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, Props.PROFILE_CREATED, Toast.LENGTH_LONG).show();
             } else if(i == Props.USER_PROFILE_PULSE_DATA +1){
                 mCircleResult.setTextMode(TextMode.PERCENT);
 
+                mCircleResult.removeCallbacks(refreshResult);
                 detectDrowsiness.run();
             }
             i++;
@@ -145,6 +150,8 @@ public class MainActivity extends AppCompatActivity {
                 setDataErrorResult(Props.BLINK_DATA_ERROR);
                 setStop();
                 isStopped = false;
+                setCreateProfileIterationValue((int)Double.POSITIVE_INFINITY);
+                mCircleResult.setUnitVisible(false);
                 return;
             }
             mCircleBlink.setValueAnimated(listBlinkRate.get(i));
@@ -164,6 +171,8 @@ public class MainActivity extends AppCompatActivity {
                 setDataErrorResult(Props.TEMP_DATA_ERROR);
                 stopThreads();
                 isStopped = false;
+                setCreateProfileIterationValue((int)Double.POSITIVE_INFINITY);
+                mCircleResult.setUnitVisible(false);
                 return;
             }
             mCircleTemp.setTextMode(TextMode.TEXT);
@@ -186,9 +195,8 @@ public class MainActivity extends AppCompatActivity {
             i+=(Props.RESULT_CHANGING_INTERVAL_CALCULATION);
             if(getCreateProfileIterationValue() < Props.USER_PROFILE_PULSE_DATA) {
                 mCircleResult.setValueAnimated(i);
-            } else{
-
             }
+
             mCircleResult.postDelayed(this, 1000);
         }
     };
@@ -201,7 +209,8 @@ public class MainActivity extends AppCompatActivity {
             currentPulse += mCirclePulse.getCurrentValue();
             currentBlink += mCircleBlink.getCurrentValue();
             if(i==3){
-                fatiqueRate = detection.calculateDrowsiness(currentPulse,currentBlink,currentTemperature);
+                fatigueRate = detection.calculateDrowsiness(currentPulse,currentBlink,currentTemperature);
+                mCircleResult.setUnitVisible(mShowUnit);
                 showDrowsinessResult.run();
                 setToNull();
                 i=0;
@@ -220,12 +229,15 @@ public class MainActivity extends AppCompatActivity {
                     getResources().getColor(R.color.middleFatique), getResources().getColor(R.color.middleHighFatique),
                     getResources().getColor(R.color.highFatique));
 
-            if(fatiqueRate < 50){
+//            mCircleResult.setUnitSize(1);
+//            mCircleResult.setUnitScale(1.2f);
+
+            if(fatigueRate > 50){
                 Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
                 Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
                 r.play();
             }
-            mCircleResult.setValueAnimated(fatiqueRate);
+            mCircleResult.setValueAnimated(fatigueRate);
             mCircleResult.postDelayed(this, 12000);
         }
     };
@@ -241,6 +253,7 @@ public class MainActivity extends AppCompatActivity {
     private void setSpin(float size){
         mCirclePulse.setTextScale(size);
         mCircleBlink.setTextScale(size);
+        mCircleTemp.setTextScale(size);
         mCirclePulse.spin();
         mCircleBlink.spin();
         mCircleTemp.spin();
@@ -253,8 +266,7 @@ public class MainActivity extends AppCompatActivity {
         mCirclePulse.stopSpinning();
         mCircleBlink.stopSpinning();
         mCircleTemp.stopSpinning();
-        //mCircleResult.spin();
-        //mCircleResult.setValueAnimated(listHeartRate.size());
+        mCircleResult.setUnitVisible(true);
     }
 
     private void loadData(){
@@ -269,11 +281,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void setSpinText(){
         mCirclePulse.setShowTextWhileSpinning(true); // Show/hide text in spinning mode
-        mCirclePulse.setText("Paused ...");
+        mCirclePulse.setText(Props.PAUSED);
         mCircleTemp.setShowTextWhileSpinning(true); // Show/hide text in spinning mode
-        mCircleTemp.setText("Paused ...");
+        mCircleTemp.setText(Props.PAUSED);
         mCircleBlink.setShowTextWhileSpinning(true);
-        mCircleBlink.setText("Paused ...");
+        mCircleBlink.setText(Props.PAUSED);
         mCircleResult.setTextMode(TextMode.PERCENT);
     }
 
@@ -294,7 +306,7 @@ public class MainActivity extends AppCompatActivity {
         mCircleResult.removeCallbacks(refreshResult);
         mCircleResult.setTextMode(TextMode.TEXT);
         mCircleResult.setUnitVisible(false);
-        mCircleResult.setText("Profile created");
+        mCircleResult.setText(Props.PROFILE_CREATED);
     }
 
     private void stopThreads(){
@@ -302,6 +314,8 @@ public class MainActivity extends AppCompatActivity {
         mCircleBlink.removeCallbacks(refreshBlinkRate);
         mCircleTemp.removeCallbacks(refreshTemperature);
         mCircleResult.removeCallbacks(refreshResult);
+        mCircleResult.removeCallbacks(detectDrowsiness);
+        mCircleResult.removeCallbacks(showDrowsinessResult);
     }
 
     private void setToNull(){
@@ -314,14 +328,12 @@ public class MainActivity extends AppCompatActivity {
         mCircleResult.setTextMode(TextMode.TEXT);
         mCircleResult.setText(message);
         Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
-        //start.callOnClick();
     }
 
     private boolean isValueInList(List<Integer> list, int i){
         if(list.size() == i){
             return false;
         }
-
         return true;
     }
 
@@ -341,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
         userProfileBlinkList = new ArrayList<Integer>();
         userProfileTempList = new ArrayList<Float>();
 
-        detection = new UserFatiqueDetection();
+        detection = new UserFatigueDetection();
 
         mCirclePulse.setClickable(false);
         mCircleTemp.setClickable(false);
